@@ -1,0 +1,61 @@
+class Game
+
+def initialize
+  @contents = File.readlines('dictionary.txt')
+  @word = ""
+  @misses = ""
+  @tries = 8
+  @game_over = false
+  new_word
+  play
+end
+
+def new_word
+  until @word.size > 4 && @word.size < 13
+    @word=@contents.sample.chomp
+  end
+  @clues = @word.tr("a-z", "_").split("")
+end
+  
+
+def play
+  clues
+  check_guess
+end
+
+def clues
+  puts "#{@clues.join} \nNumber of letters: #{@clues.size}"
+  puts "Number of tries remaining : #{@tries}"
+  puts "Misses : #{@misses}"
+end
+
+def check_guess
+  check_endgame
+  until @game_over
+  puts "\nPlease enter a letter"
+  @guess=gets.chomp.downcase
+  @word.split("").each_with_index do |letter, index|
+    if letter.match?(@guess)
+      @clues[index] = @guess
+    end
+  end
+  @misses += @guess
+  @tries -= 1
+  play
+end
+end
+
+def check_endgame
+  if @clues.none? {|element| element == "_"}
+    @game_over = true
+    puts "Sorry, you won..."
+  elsif @tries == 0
+    @game_over = true
+    puts "Congratulations, you lost !"
+    return
+  end
+end
+
+end
+
+Game.new
