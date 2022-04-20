@@ -57,6 +57,7 @@ def check_guess
     @guess=gets.chomp.downcase
     if @guess == "save"
       save
+      exit
     elsif @guess.length == 1
       @word.split("").each_with_index do |letter, index|
         if letter.match?(@guess)
