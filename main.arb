@@ -1,0 +1,123 @@
+require "yaml"
+
+class String
+  def red;            "\e[31m#{self}\e[0m" end
+end
+
+class Game < String
+
+def initialize
+  @contents = File.readlines('dictionary.txt')
+  @word = ""
+  @misses = ""
+  @guesses = ""
+  @tries = 8
+  @game_over = false
+  new_word
+  start
+end
+
+private
+
+def new_word
+  until @word.size > 4 && @word.size < 13
+    @word=@contents.sample.chomp
+  end
+  @clues = @word.tr("a-z", "_").split("")
+end
+
+def start
+  puts "\nWould you like to play a new game (press 1) or load a save file (press 2) ?"
+  @answer = gets.chomp
+  if @answer == "1"
+    play
+  elsif @answer == "2"
+    load
+    play
+  else
+    error
+  end
+end
+
+def play
+  puts "\e[H\e[2J"
+  clues
+  check_guess
+end
+
+def clues
+  puts "#{@clues.join} \nNumber of letters: #{@clues.size}"
+  puts "Number of tries remaining : #{@tries}"
+  puts "Misses : #{@misses}"
+end
+
+def check_guess
+  check_endgame
+  until @game_over
+    puts "\nPlease enter a letter or type 'save' to save your game."
+    @guess=gets.chomp.downcase
+    if @guess == "save"
+      save
+      exit
+    elsif @guess.length == 1
+      @word.split("").each_with_index do |letter, index|
+        if letter.match?(@guess)
+          @clues[index] = @guess
+          @guesses += @guess
+        end
+      end
+    else
+      error
+    end
+    wrong_letters(@guess)
+    play
+  end
+end
+
+def wrong_letters(char)
+  if @guesses.include?(char)
+    return
+  elsif @guess.length == 1
+    @misses += char.red + " "
+    @tries -= 1
+  end
+end
+
+def check_endgame
+  if @clues.none? {|element| element == "_"}
+    @game_over = true
+    puts "Sorry, you won..."
+  elsif @tries == 0
+    @game_over = true
+    puts "Congratulations, you lost ! The word you were looking for was : #{@word}"
+    return
+  end
+end
+
+def save
+  @save_file = File.open("save.yml", "w") {|file| file.write(YAML.dump({ 
+  word: @word,
+  misses: @misses,
+  guesses: @guesses,
+  tries: @tries,
+  clues: @clues.join
+  }))}  
+end
+
+def load
+  @load_save_file = YAML.load(File.read("save.yml"))
+  @word = @load_save_file[:word]
+  @misses = @load_save_file[:misses]
+  @guesses = @load_save_file[:guesses]
+  @tries = @load_save_file[:tries]
+  @clues = @load_save_file[:clues].split("")
+end
+
+def error
+  puts "Erroneous input! Try again..."
+  check_guess
+end
+
+end
+
+Game.new
